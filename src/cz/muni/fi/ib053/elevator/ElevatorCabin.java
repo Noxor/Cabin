@@ -24,10 +24,10 @@ public class ElevatorCabin {
 	private int occupancy;
 	private DoorState doorState;
 	private CabinState cabinState;
-	public static final String PANEL = "PANEL", DOOR = "DOOR", LIGHT = "LIGHT",
+	public static final String LEVEL = "LEVEL", DOOR = "DOOR", LIGHT = "LIGHT",
 			BUTTON = "BUTTON", SENSOR = "SENSOR", LOAD = "LOAD",
 			OPEN_BUTTON = "OPEN_BUTTON", CLOSE_BUTTON = "CLOSE_BUTTON",
-			INITIALIZE = "INITIALIZE";
+			INITIALIZE = "INITIALIZE", STATE = "STATE";
 
 	public ElevatorCabin(String[] labels, int capacity, int groundLevel,
 			String server, int port) {
@@ -70,7 +70,21 @@ public class ElevatorCabin {
 	}
 
 	public void setLevel(int level) {
+		if(level < 0 || level >= levelCount)
+			return;//log
+		int old = this.level;
 		this.level = level;
+		eventsForConnection.firePropertyChange(LEVEL, old, level);		
+	}
+
+	public CabinState getCabinState() {
+		return cabinState;
+	}
+
+	public void setCabinState(CabinState state) {
+		CabinState old = cabinState;
+		this.cabinState = state;
+		eventsForConnection.firePropertyChange(STATE, old, cabinState);	
 	}
 
 	public int getCapacity() {
@@ -177,7 +191,7 @@ public class ElevatorCabin {
 				buttonLight[level]);
 	}
 
-	//metodu zrusit a volat primo z main do cabin client
+	// metodu zrusit a volat primo z main do cabin client
 	public void initializeConnection() {
 		eventsForConnection.firePropertyChange(INITIALIZE, -2, -1);
 	}
@@ -211,7 +225,7 @@ public class ElevatorCabin {
 	}
 
 	public enum CabinState {
-		MOVE_UP, MOVE_DOWN, STAND_EMPTY, DOOR_OPEN;
+		MOVE_UP, MOVE_DOWN, STAND_EMPTY, DOOR_OPEN, OVERLOAD;
 	}
 
 }

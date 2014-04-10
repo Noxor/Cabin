@@ -166,7 +166,9 @@ public class Frame extends JFrame implements PropertyChangeListener {
 			}
 
 			break;
-		case ElevatorCabin.PANEL:
+		case ElevatorCabin.LEVEL:
+			break;
+		case ElevatorCabin.STATE:
 			break;
 		}
 	}

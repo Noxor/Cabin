@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import cz.muni.fi.ib053.elevator.ElevatorCabin.CabinState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LoadState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
@@ -155,6 +156,8 @@ public class CabinClient implements PropertyChangeListener {
 			String[] tokens = message.split(";");
 			if (tokens.length < 1)
 				return;
+			
+			int level;
 
 			switch (tokens[0]) {
 			case "OTEVRI":
@@ -170,11 +173,41 @@ public class CabinClient implements PropertyChangeListener {
 				cabin.turnOffTheLights();
 				break;
 			case "PANEL":
+				if (tokens.length != 3)
+					return; // maybe throw or log
+				
+				try {
+					level = Integer.parseInt(tokens[2]);
+				} catch (NumberFormatException e) {
+					// TODO Auto-generated catch block
+					// e.printStackTrace();
+					return;
+				}
+				cabin.setLevel(level);
+				switch (tokens[1]) {
+				case "N":
+					cabin.setCabinState(CabinState.MOVE_UP);
+					break;
+				case "D":
+					cabin.setCabinState(CabinState.MOVE_DOWN);
+					break;
+				case "S":
+					cabin.setCabinState(CabinState.DOOR_OPEN);
+					break;
+				case "K":
+					cabin.setCabinState(CabinState.STAND_EMPTY);
+					break;
+				case "P":
+					cabin.setCabinState(CabinState.OVERLOAD);
+					break;
+				default:
+					return; // +log something
+				}
 				break;
 			case "INDIKACE":
 				if (tokens.length != 3)
 					return; // maybe throw or log
-				int level;
+				
 				try {
 					level = Integer.parseInt(tokens[1]);
 				} catch (NumberFormatException e) {
