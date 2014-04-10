@@ -86,7 +86,6 @@ public class CabinClient implements PropertyChangeListener {
 		default:
 			; // nothing is send for opening & closing
 		}
-
 	}
 
 	public void initialize() {
@@ -96,11 +95,26 @@ public class CabinClient implements PropertyChangeListener {
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
 
-		System.out.println("Conn event " + event.getPropertyName());
+		//System.out.println("Conn event " + event.getPropertyName());
 
 		switch (event.getPropertyName()) {
 		case ElevatorCabin.BUTTON:
 			lvlBtnPressed((int)event.getNewValue());
+			break;
+		case ElevatorCabin.SENSOR:
+			sensorAction();
+			break;
+		case ElevatorCabin.DOOR:
+			doorStateChanged((DoorState)event.getNewValue());
+			break;
+		case ElevatorCabin.LOAD:
+			occupancyChanged((LoadState)event.getNewValue());
+			break;
+		case ElevatorCabin.OPEN_BUTTON:
+			openBtnPressed();
+			break;
+		case ElevatorCabin.CLOSE_BUTTON:
+			closeBtnPressed();
 			break;
 		case ElevatorCabin.INITIALIZE:
 			initialize();
