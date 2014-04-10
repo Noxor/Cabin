@@ -144,7 +144,6 @@ public class CabinClient implements PropertyChangeListener {
 		public void run() {
 			try {
 				while (listening) {
-					System.out.println("l");
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {

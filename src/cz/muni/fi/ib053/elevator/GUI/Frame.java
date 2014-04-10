@@ -29,6 +29,8 @@ public class Frame extends JFrame implements PropertyChangeListener, WindowListe
 	private JButton enter, leave;
 	private JLabel peopleLabel;
 	private JLabel doorLabel;
+	private JLabel levelLabel;
+	private JLabel stateLabel;
 
 	public Frame(ElevatorCabin cabin, CabinClient client) {		
 		this.cabin = cabin;
@@ -37,6 +39,7 @@ public class Frame extends JFrame implements PropertyChangeListener, WindowListe
 		this.add(mainPanel);
 		
 		addWindowListener(this);
+		
 		lvlButtons = new JButton[cabin.getLevelCount()];
 		for (int i = 0; i < cabin.getLevelCount(); i++) {
 			lvlButtons[i] = new JButton("Button " + cabin.getLevelLabel(i));
@@ -78,6 +81,12 @@ public class Frame extends JFrame implements PropertyChangeListener, WindowListe
 		mainPanel.add(peopleLabel);
 		mainPanel.add(enter);
 
+		
+		levelLabel = new JLabel("Level: " + cabin.getLevel());
+		mainPanel.add(levelLabel);
+		
+		stateLabel = new JLabel("State: " + cabin.getCabinState());
+		mainPanel.add(stateLabel);
 		
 		cabin.addGUIChangeListener(this); // pak hlavne odregistrovat
 	}
@@ -171,8 +180,10 @@ public class Frame extends JFrame implements PropertyChangeListener, WindowListe
 
 			break;
 		case ElevatorCabin.LEVEL:
+			levelLabel.setText("Level: " + cabin.getLevel());
 			break;
 		case ElevatorCabin.STATE:
+			stateLabel.setText("State: " + cabin.getCabinState());
 			break;
 		}
 	}
@@ -181,12 +192,12 @@ public class Frame extends JFrame implements PropertyChangeListener, WindowListe
 	@Override
 	public void windowClosing(WindowEvent arg0) {
 		//client.stop();
-		System.exit(0);
+		System.exit(0); //no need to call stop, thread ends anyway
 	}
 	
 	@Override
 	public void windowClosed(WindowEvent arg0) {
-			
+		// nada	
 	}
 
 	@Override
