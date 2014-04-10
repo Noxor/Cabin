@@ -1,5 +1,7 @@
 package cz.muni.fi.ib053.elevator;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
@@ -8,7 +10,7 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin.LoadState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 
-public class CabinClient {
+public class CabinClient implements PropertyChangeListener {
 
 	private TCPConnection connection;
 	private ElevatorCabin cabin;
@@ -25,6 +27,9 @@ public class CabinClient {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+		cabin.addConnectionChangeListener(this); // pak odregistrovat
+		//cabin.addGUIChangeListener(this);
 	}
 
 	private void send(String message) {
@@ -78,13 +83,31 @@ public class CabinClient {
 		case OPEN:
 			send("DVERE;O\n");
 			break;
-		default:;    //nothing is send for opening & closing
+		default:
+			; // nothing is send for opening & closing
 		}
 
 	}
 
 	public void initialize() {
 		send("INICIALIZACE;" + cabin.getLevelCount() + "\n");
+	}
+
+	@Override
+	public void propertyChange(PropertyChangeEvent event) {
+
+		System.out.println("Conn event " + event.getPropertyName());
+
+		switch (event.getPropertyName()) {
+		case ElevatorCabin.BUTTON:
+			lvlBtnPressed((int)event.getNewValue());
+			break;
+		case ElevatorCabin.INITIALIZE:
+			initialize();
+			break;
+		
+		}
+
 	}
 
 	private class TcpListeningThread implements Runnable {
@@ -161,7 +184,6 @@ public class CabinClient {
 				break;
 			default: // log something
 			}
-
 		}
 	}
 }

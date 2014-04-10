@@ -5,30 +5,38 @@ import java.beans.PropertyChangeSupport;
 import java.util.Arrays;
 
 ///Predelat i spojeni s vyuzitim listeneru, jine udalosti aby se posilalo je serveru nebo GUI, dalsi PropertyChangeSupport,
-// nebo obracene?? dum poslouchat udalosti od spojeni?
+// nebo obracene?? dum poslouchat udalosti od spojeni? zkusit upne nove udalosti
+// http://castever.wordpress.com/2008/07/31/how-to-create-your-own-events-in-java/
+// http://stackoverflow.com/questions/6270132/create-a-custom-event-in-java
+// http://www.codeproject.com/Articles/677591/Defining-Custom-Source-Event-Listener-in-Java  asi nejlepsi
+// http://www.java2s.com/Code/Java/Event/CreatingaCustomEvent.htm ofiko
 public class ElevatorCabin {
 
-	private PropertyChangeSupport propChangeSup = new PropertyChangeSupport(
-			this);
+	private PropertyChangeSupport eventsForGUI;
+	private PropertyChangeSupport eventsForConnection;
 	private int levelCount;
 	private int groundLevel;
 	private int level;
 	private String[] levelLabels;
 	private LightState[] buttonLight;
-	private CabinClient tcpClient;
 	private boolean lightsOn;
 	private int capacity;
 	private int occupancy;
 	private DoorState doorState;
 	private CabinState cabinState;
 	public static final String PANEL = "PANEL", DOOR = "DOOR", LIGHT = "LIGHT",
-			BUTTON = "BUTTON";
+			BUTTON = "BUTTON", SENSOR = "SENSOR", LOAD = "LOAD",
+			OPEN_BUTTON = "OPEN_BUTTON", CLOSE_BUTTON = "CLOSE_BUTTON",
+			INITIALIZE = "INITIALIZE";
 
 	public ElevatorCabin(String[] labels, int capacity, int groundLevel,
 			String server, int port) {
 		if (labels.length == 0)
 			throw new IllegalArgumentException(
 					"Constructor of elevator cabin requires array of minimal length 1");
+
+		eventsForGUI = new PropertyChangeSupport(this);
+		eventsForConnection = new PropertyChangeSupport(this);
 
 		levelCount = labels.length;
 		levelLabels = new String[levelCount];
@@ -46,7 +54,6 @@ public class ElevatorCabin {
 		doorState = DoorState.CLOSE;
 		cabinState = CabinState.STAND_EMPTY;
 
-		tcpClient = new CabinClient(server, port, this);
 		this.groundLevel = groundLevel;
 	}
 
@@ -78,10 +85,9 @@ public class ElevatorCabin {
 	synchronized public void setDoorState(DoorState state) {
 		DoorState old = doorState;
 		this.doorState = state;
-		propChangeSup.firePropertyChange(DOOR, old, doorState);// asi oboje bude
-																// hayet udalost
+		eventsForGUI.firePropertyChange(DOOR, old, doorState);
 
-		tcpClient.doorStateChanged(doorState);// ale do jineho listeneru
+		eventsForConnection.firePropertyChange(DOOR, old, doorState);
 	}
 
 	// je potreba?
@@ -104,21 +110,22 @@ public class ElevatorCabin {
 	// mozna predelat, pamatovat occupancy LoadState v kabine, nebo metoda,so ho
 	// vraci
 	public void enter() {
-		tcpClient.sensorAction();
-		occupancy++;
-		
-		tcpClient.occupancyChanged(getLoadState());
+		sensorEvent(1);
 	}
 
 	public void leave() {
 		if (occupancy <= 0)
 			return;
 
-		tcpClient.sensorAction();
-		occupancy--;
+		sensorEvent(-1);
+	}
 
-		tcpClient.occupancyChanged(getLoadState());
+	private void sensorEvent(int change) {
+		eventsForConnection.firePropertyChange(SENSOR, -2, -1);
+		LoadState old = getLoadState();
+		occupancy += change;
 
+		eventsForConnection.firePropertyChange(LOAD, old, getLoadState());
 	}
 
 	public LightState getLightState(int level) {
@@ -137,26 +144,26 @@ public class ElevatorCabin {
 		boolean old = lightsOn;
 		lightsOn = true;
 
-		propChangeSup.firePropertyChange(LIGHT, old, lightsOn);
+		eventsForGUI.firePropertyChange(LIGHT, old, lightsOn);
 	}
 
 	public void turnOffTheLights() {
 		boolean old = lightsOn;
 		lightsOn = false;
 
-		propChangeSup.firePropertyChange(LIGHT, old, lightsOn);
+		eventsForGUI.firePropertyChange(LIGHT, old, lightsOn);
 	}
 
 	public void lvlBtnPressed(int level) {
-		tcpClient.lvlBtnPressed(level);
+		eventsForConnection.firePropertyChange(BUTTON, -1, level);
 	}
 
 	public void openBtnPressed() {
-		tcpClient.openBtnPressed();
+		eventsForConnection.firePropertyChange(OPEN_BUTTON, -2, -1);
 	}
 
 	public void closeBtnPressed() {
-		tcpClient.closeBtnPressed();
+		eventsForConnection.firePropertyChange(CLOSE_BUTTON, -2, -1);
 	}
 
 	public void changeBtnLight(int level, LightState state) {
@@ -166,20 +173,29 @@ public class ElevatorCabin {
 		LightState old = buttonLight[level];
 		buttonLight[level] = state;
 
-		propChangeSup.fireIndexedPropertyChange(BUTTON, level, old,
+		eventsForGUI.fireIndexedPropertyChange(BUTTON, level, old,
 				buttonLight[level]);
 	}
 
+	//metodu zrusit a volat primo z main do cabin client
 	public void initializeConnection() {
-		tcpClient.initialize();
+		eventsForConnection.firePropertyChange(INITIALIZE, -2, -1);
 	}
 
-	public void addPropertyChangeListener(PropertyChangeListener listener) {
-		propChangeSup.addPropertyChangeListener(listener);
+	public void addGUIChangeListener(PropertyChangeListener listener) {
+		eventsForGUI.addPropertyChangeListener(listener);
 	}
 
-	public void removePropertyChangeListener(PropertyChangeListener listener) {
-		propChangeSup.removePropertyChangeListener(listener);
+	public void removeGUIChangeListener(PropertyChangeListener listener) {
+		eventsForGUI.removePropertyChangeListener(listener);
+	}
+
+	public void addConnectionChangeListener(PropertyChangeListener listener) {
+		eventsForConnection.addPropertyChangeListener(listener);
+	}
+
+	public void removeConnectionChangeListener(PropertyChangeListener listener) {
+		eventsForConnection.removePropertyChangeListener(listener);
 	}
 
 	public enum LightState {

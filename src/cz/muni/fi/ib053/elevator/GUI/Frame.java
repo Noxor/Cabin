@@ -12,6 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import cz.muni.fi.ib053.elevator.CabinClient;
 import cz.muni.fi.ib053.elevator.ElevatorCabin;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
@@ -26,11 +27,11 @@ public class Frame extends JFrame implements PropertyChangeListener {
 	private JLabel peopleLabel;
 	private JLabel doorLabel;
 
-	public Frame(ElevatorCabin cabin) {
+	public Frame(ElevatorCabin cabin) {		
 		this.cabin = cabin;
 		mainPanel = new JPanel();
 		this.add(mainPanel);
-		cabin.addPropertyChangeListener(this); // pak hlavne odregistrovat
+		cabin.addGUIChangeListener(this); // pak hlavne odregistrovat
 
 		lvlButtons = new JButton[cabin.getLevelCount()];
 		for (int i = 0; i < cabin.getLevelCount(); i++) {
@@ -66,15 +67,15 @@ public class Frame extends JFrame implements PropertyChangeListener {
 
 		enter.addActionListener(new PeopleButtonListener(1));
 		leave.addActionListener(new PeopleButtonListener(-1));
-		
+
 		doorLabel = new JLabel("DOOR: CLOSED");
 
 		mainPanel.add(leave);
 		mainPanel.add(peopleLabel);
 		mainPanel.add(enter);
-		
-		
+
 		cabin.initializeConnection();
+		
 	}
 
 	private class LevelButtonListener implements ActionListener {
@@ -134,8 +135,8 @@ public class Frame extends JFrame implements PropertyChangeListener {
 
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
-		// TODO Auto-generated method stub
-		System.out.println(event.getPropertyName());
+	
+		System.out.println("GUI event " + event.getPropertyName());
 
 		switch (event.getPropertyName()) {
 		case ElevatorCabin.LIGHT:
@@ -144,7 +145,8 @@ public class Frame extends JFrame implements PropertyChangeListener {
 			else
 				lightBulb.setBackground(Color.BLACK);
 			break;
-		case ElevatorCabin.DOOR:    ///start separate Thread for opening/closing - REDO
+		case ElevatorCabin.DOOR: // /start separate Thread for opening/closing -
+									// REDO
 			if ((DoorState) event.getNewValue() == DoorState.OPENING) {
 				cabin.setDoorState(DoorState.OPEN);
 				doorLabel.setText("DOOR: OPENED");
@@ -154,7 +156,7 @@ public class Frame extends JFrame implements PropertyChangeListener {
 			}
 			break;
 		case ElevatorCabin.BUTTON:
-			int index = ((IndexedPropertyChangeEvent)event).getIndex();
+			int index = ((IndexedPropertyChangeEvent) event).getIndex();
 			if ((LightState) event.getNewValue() == LightState.SHINE) {
 				lvlButtons[index].setBackground(Color.YELLOW);
 			} else if ((LightState) event.getNewValue() == LightState.FLASH) {
@@ -162,7 +164,7 @@ public class Frame extends JFrame implements PropertyChangeListener {
 			} else {
 				lvlButtons[index].setBackground(null);
 			}
-			
+
 			break;
 		case ElevatorCabin.PANEL:
 			break;

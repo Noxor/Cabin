@@ -2,6 +2,7 @@ package cz.muni.fi.ib053.elevator.GUI;
 
 import java.awt.Dimension;
 
+import cz.muni.fi.ib053.elevator.CabinClient;
 import cz.muni.fi.ib053.elevator.ElevatorCabin;
 
 public class Main {
@@ -21,6 +22,9 @@ public class Main {
 
 		ElevatorCabin cabin = new ElevatorCabin(btnLabels, capacity, groundLevel, server,
 				port);
+		
+		///asi presunout initialiyaci spojeni
+		new CabinClient(server, port, cabin);
 		
 
 		Frame jms = new Frame(cabin);
