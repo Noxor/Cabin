@@ -15,12 +15,14 @@ public class CabinClient implements PropertyChangeListener {
 
 	private TCPConnection connection;
 	private ElevatorCabin cabin;
+	private boolean listening;
 
 	public CabinClient(String server, int port, ElevatorCabin cabin) {
+		listening = false;
 		this.cabin = cabin;
 		try {
 			connection = new TCPConnection(server, port);
-			(new Thread(new TcpListeningThread())).start();
+			start();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (UnknownHostException e) {
@@ -92,6 +94,17 @@ public class CabinClient implements PropertyChangeListener {
 	public void initialize() {
 		send("INICIALIZACE;" + cabin.getLevelCount() + "\n");
 	}
+	
+	public void start(){
+		if(listening)
+			return;
+		listening = true;
+		(new Thread(new TcpListeningThread())).start();;
+	}
+	
+	public void stop(){
+		listening = false;
+	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
@@ -116,11 +129,7 @@ public class CabinClient implements PropertyChangeListener {
 			break;
 		case ElevatorCabin.CLOSE_BUTTON:
 			closeBtnPressed();
-			break;
-		case ElevatorCabin.INITIALIZE:
-			initialize();
-			break;
-		
+			break;		
 		}
 
 	}
@@ -134,7 +143,8 @@ public class CabinClient implements PropertyChangeListener {
 		@Override
 		public void run() {
 			try {
-				while (true) {
+				while (listening) {
+					System.out.println("l");
 					try {
 						Thread.sleep(100);
 					} catch (InterruptedException e) {

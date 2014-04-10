@@ -27,7 +27,7 @@ public class ElevatorCabin {
 	public static final String LEVEL = "LEVEL", DOOR = "DOOR", LIGHT = "LIGHT",
 			BUTTON = "BUTTON", SENSOR = "SENSOR", LOAD = "LOAD",
 			OPEN_BUTTON = "OPEN_BUTTON", CLOSE_BUTTON = "CLOSE_BUTTON",
-			INITIALIZE = "INITIALIZE", STATE = "STATE";
+			STATE = "STATE";
 
 	public ElevatorCabin(String[] labels, int capacity, int groundLevel,
 			String server, int port) {
@@ -74,7 +74,7 @@ public class ElevatorCabin {
 			return;//log
 		int old = this.level;
 		this.level = level;
-		eventsForConnection.firePropertyChange(LEVEL, old, level);		
+		eventsForGUI.firePropertyChange(LEVEL, old, level);		
 	}
 
 	public CabinState getCabinState() {
@@ -84,7 +84,7 @@ public class ElevatorCabin {
 	public void setCabinState(CabinState state) {
 		CabinState old = cabinState;
 		this.cabinState = state;
-		eventsForConnection.firePropertyChange(STATE, old, cabinState);	
+		eventsForGUI.firePropertyChange(STATE, old, cabinState);	
 	}
 
 	public int getCapacity() {
@@ -189,11 +189,6 @@ public class ElevatorCabin {
 
 		eventsForGUI.fireIndexedPropertyChange(BUTTON, level, old,
 				buttonLight[level]);
-	}
-
-	// metodu zrusit a volat primo z main do cabin client
-	public void initializeConnection() {
-		eventsForConnection.firePropertyChange(INITIALIZE, -2, -1);
 	}
 
 	public void addGUIChangeListener(PropertyChangeListener listener) {

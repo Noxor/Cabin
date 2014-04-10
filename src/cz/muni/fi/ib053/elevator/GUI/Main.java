@@ -1,6 +1,7 @@
 package cz.muni.fi.ib053.elevator.GUI;
 
 import java.awt.Dimension;
+import java.awt.event.WindowEvent;
 
 import cz.muni.fi.ib053.elevator.CabinClient;
 import cz.muni.fi.ib053.elevator.ElevatorCabin;
@@ -12,6 +13,7 @@ public class Main {
 		String[] btnLabels;
 		int groundLevel;
 		int capacity;
+		CabinClient client;
 
 		// TODO: propper initialization
 		server = "localhost";
@@ -20,16 +22,18 @@ public class Main {
 		groundLevel = 2;
 		capacity = 4;
 
-		ElevatorCabin cabin = new ElevatorCabin(btnLabels, capacity, groundLevel, server,
-				port);
-		
-		///asi presunout initialiyaci spojeni
-		new CabinClient(server, port, cabin);
-		
+		ElevatorCabin cabin = new ElevatorCabin(btnLabels, capacity,
+				groundLevel, server, port);
 
-		Frame jms = new Frame(cabin);
+		// /asi presunout initialiyaci spojeni
+		client = new CabinClient(server, port, cabin);
+		client.initialize();
+
+		Frame jms = new Frame(cabin, client);
 		jms.setSize(new Dimension(500, 500));
 		jms.setVisible(true);
-		jms.setResizable(true);
+		jms.setResizable(false);
 	}
+
+	
 }

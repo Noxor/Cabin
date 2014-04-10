@@ -3,6 +3,8 @@ package cz.muni.fi.ib053.elevator.GUI;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.beans.IndexedPropertyChangeEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -17,8 +19,9 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 
-public class Frame extends JFrame implements PropertyChangeListener {
+public class Frame extends JFrame implements PropertyChangeListener, WindowListener {
 	private ElevatorCabin cabin;
+	private CabinClient client;
 	private JPanel mainPanel;
 	private JButton[] lvlButtons;
 	private JButton doorClose, doorOpen;
@@ -27,12 +30,13 @@ public class Frame extends JFrame implements PropertyChangeListener {
 	private JLabel peopleLabel;
 	private JLabel doorLabel;
 
-	public Frame(ElevatorCabin cabin) {		
+	public Frame(ElevatorCabin cabin, CabinClient client) {		
 		this.cabin = cabin;
+		this.client = client;
 		mainPanel = new JPanel();
 		this.add(mainPanel);
-		cabin.addGUIChangeListener(this); // pak hlavne odregistrovat
-
+		
+		addWindowListener(this);
 		lvlButtons = new JButton[cabin.getLevelCount()];
 		for (int i = 0; i < cabin.getLevelCount(); i++) {
 			lvlButtons[i] = new JButton("Button " + cabin.getLevelLabel(i));
@@ -74,8 +78,8 @@ public class Frame extends JFrame implements PropertyChangeListener {
 		mainPanel.add(peopleLabel);
 		mainPanel.add(enter);
 
-		cabin.initializeConnection();
 		
+		cabin.addGUIChangeListener(this); // pak hlavne odregistrovat
 	}
 
 	private class LevelButtonListener implements ActionListener {
@@ -171,6 +175,43 @@ public class Frame extends JFrame implements PropertyChangeListener {
 		case ElevatorCabin.STATE:
 			break;
 		}
+	}
+	
+	///Follows WindowListener methods
+	@Override
+	public void windowClosing(WindowEvent arg0) {
+		//client.stop();
+		System.exit(0);
+	}
+	
+	@Override
+	public void windowClosed(WindowEvent arg0) {
+			
+	}
+
+	@Override
+	public void windowActivated(WindowEvent arg0) {
+		// nada		
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent arg0) {
+		// nada		
+	}
+
+	@Override
+	public void windowDeiconified(WindowEvent arg0) {
+		// nada		
+	}
+
+	@Override
+	public void windowIconified(WindowEvent arg0) {
+		// nada		
+	}
+
+	@Override
+	public void windowOpened(WindowEvent arg0) {
+		// nada		
 	}
 
 }
