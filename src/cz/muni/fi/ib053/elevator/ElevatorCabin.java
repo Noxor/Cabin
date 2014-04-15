@@ -97,11 +97,24 @@ public class ElevatorCabin {
 
 	// only method called from different Threads
 	synchronized public void setDoorState(DoorState state) {
+		System.out.println("in set door state method " + state);
 		DoorState old = doorState;
 		this.doorState = state;
-		eventsForGUI.firePropertyChange(DOOR, old, doorState);
+		
+		switch(doorState)  //potreba alespon dokud se dvere otevrou hned, udalosti jsou pomale a dojde k prepnuti kontextu, server pak pro obe zpravy vidi otevrene dvere a posle to pryc dvakrat
+		{
+			case OPENING:
+			case CLOSING:
+				eventsForGUI.firePropertyChange(DOOR, old, doorState);
+				break;
+			case OPEN:
+			case CLOSE:
+				eventsForConnection.firePropertyChange(DOOR, old, doorState);
+				break;
+		}
+		
 
-		eventsForConnection.firePropertyChange(DOOR, old, doorState);
+		
 	}
 
 	// je potreba?
