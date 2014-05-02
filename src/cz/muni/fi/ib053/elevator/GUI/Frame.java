@@ -1,6 +1,7 @@
 package cz.muni.fi.ib053.elevator.GUI;
 
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
@@ -8,86 +9,147 @@ import java.awt.event.WindowListener;
 import java.beans.IndexedPropertyChangeEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JToggleButton;
 
+import net.miginfocom.swing.MigLayout;
 import cz.muni.fi.ib053.elevator.CabinClient;
 import cz.muni.fi.ib053.elevator.ElevatorCabin;
+import cz.muni.fi.ib053.elevator.ElevatorCabin.CabinState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 
-public class Frame extends JFrame implements PropertyChangeListener, WindowListener {
+public class Frame extends JFrame implements PropertyChangeListener,
+		WindowListener {
 	private ElevatorCabin cabin;
 	private CabinClient client;
 	private JPanel mainPanel;
+	private JPanel IOPanel;
+	private JPanel cabinPanel;
 	private JButton[] lvlButtons;
+	private JToggleButton[] people;
 	private JButton doorClose, doorOpen;
 	private JLabel lightBulb; // temporal from now on down
-	private JButton enter, leave;
-	private JLabel peopleLabel;
-	private JLabel doorLabel;
 	private JLabel levelLabel;
 	private JLabel stateLabel;
+	private ImageIcon closeImg;
+	private ImageIcon openImg;
+	private ImageIcon idleImage;
+	private ImageIcon bleepImage;
+	private ImageIcon downImage;
+	private ImageIcon upImage;
+	private ImageIcon cleanImage;
+	private ImageIcon overloadImage;
+	private ImageIcon personImage;
+	private ImageIcon noPersonImage;
+	private JPanel doorPosts;
+	private JPanel doorPanel;
+	private ConcurrentLinkedQueue<String> doorQueue;
 
-	public Frame(ElevatorCabin cabin, CabinClient client) {		
+	public Frame(ElevatorCabin cabin, CabinClient client) {
 		this.cabin = cabin;
 		this.client = client;
+		this.doorQueue = new ConcurrentLinkedQueue<String>();
+		(new Thread(new GUIMovingThread())).start();
 		mainPanel = new JPanel();
+		mainPanel.setLayout(new MigLayout("", "", ""));
 		this.add(mainPanel);
-		
+		IOPanel = new JPanel();
+		IOPanel.setLayout(new MigLayout("", "", ""));
+		mainPanel.add(IOPanel, "width 100::100");
+		cabinPanel = new JPanel();
+		cabinPanel.setLayout(new MigLayout("", "", ""));
+		mainPanel.add(cabinPanel, "width 130::");
+		cabinPanel.setBorder(BorderFactory
+				.createLineBorder(Color.GRAY, 1, true));
+		IOPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+
 		addWindowListener(this);
-		
+
+		closeImg = new ImageIcon("res/BUTTON_CLOSE.png");
+		openImg = new ImageIcon("res/BUTTON_OPEN.png");
+		idleImage = new ImageIcon("res/BUTTON_OFF.png");
+		bleepImage = new ImageIcon("res/BUTTON_ON.png");
+		downImage = new ImageIcon("res/SIGN_DOWN.png");
+		upImage = new ImageIcon("res/SIGN_UP.png");
+		cleanImage = new ImageIcon("res/EMPTY.png");
+		overloadImage = new ImageIcon("res/SIGN_OVERLOAD.png");
+		personImage = new ImageIcon("res/PERSON_YES.png");
+		noPersonImage = new ImageIcon("res/PERSON_NO.png");
+
+		stateLabel = new JLabel(cleanImage);
+		IOPanel.add(stateLabel);
+
+		levelLabel = new JLabel(cabin.getLevel() + ""); // toString does not
+														// work on int
+		IOPanel.add(levelLabel, "alignx center, wrap");
+		levelLabel.setForeground(Color.BLUE);
+
 		lvlButtons = new JButton[cabin.getLevelCount()];
-		for (int i = 0; i < cabin.getLevelCount(); i++) {
-			lvlButtons[i] = new JButton("Button " + cabin.getLevelLabel(i));
+		for (int i = cabin.getLevelCount() - 1; i >= 0; i--) {
+			lvlButtons[i] = new JButton(idleImage);
+			lvlButtons[i].setBorder(BorderFactory.createEmptyBorder());
 
 			lvlButtons[i].addActionListener(new LevelButtonListener(i));
 
-			mainPanel.add(lvlButtons[i]);
+			IOPanel.add(new JLabel(cabin.getLevelLabel(i)), "alignx center");
+			IOPanel.add(lvlButtons[i], "wrap");
 		}
 
-		doorClose = new JButton("Zavri dvere");
-		doorOpen = new JButton("Otevri dvere");
+		doorOpen = new JButton(openImg);
+		doorOpen.setBorder(BorderFactory.createEmptyBorder());
+
+		doorClose = new JButton(closeImg);
+		doorClose.setBorder(BorderFactory.createEmptyBorder());
 
 		doorClose.addActionListener(new CloseButtonListener());
 		doorOpen.addActionListener(new OpenButtonListener());
 
-		mainPanel.add(doorClose);
-		mainPanel.add(doorOpen);
+		IOPanel.add(doorClose);
+		IOPanel.add(doorOpen);
 
 		// TODO re-do bellow completely
-		lightBulb = new JLabel();
-		lightBulb.setText("Light Bulb");
-		lightBulb.setBackground(Color.BLACK);
-		lightBulb.setForeground(Color.WHITE);
-		lightBulb.setOpaque(true);
+		cabinPanel.setBackground(Color.BLACK);
 
-		mainPanel.add(lightBulb);
+		doorPosts = new JPanel();
+		doorPosts.setLayout(new MigLayout("", "", ""));
+		doorPosts
+				.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+		doorPosts.setBackground(Color.BLACK);
+		cabinPanel.add(doorPosts,
+				"width 200::200, height 300::300, wrap,alignx center");
 
+		doorPanel = new JPanel();
+		doorPanel.setBackground(Color.BLUE);
+		doorPosts.add(doorPanel,
+				"width 0::0, height 285::285, wrap, alignx center,push");
+
+		JPanel peoplePanel = new JPanel();
+		peoplePanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1,
+				true));
+		cabinPanel.add(peoplePanel, "alignx center");
 		// ////////////////
-		enter = new JButton("+");
-		leave = new JButton("-");
-		peopleLabel = new JLabel("People: " + cabin.getOccupancy());
+		people = new JToggleButton[5];
+		for (int i = 0; i < people.length; i++) {
+			people[i] = new JToggleButton(noPersonImage);
+			people[i].setBorder(BorderFactory.createEmptyBorder());
 
-		enter.addActionListener(new PeopleButtonListener(1));
-		leave.addActionListener(new PeopleButtonListener(-1));
+			people[i].addActionListener(new PeopleButtonListener(people[i]));
 
-		doorLabel = new JLabel("DOOR: CLOSED");
+			peoplePanel.add(people[i]);
+		}
 
-		mainPanel.add(leave);
-		mainPanel.add(peopleLabel);
-		mainPanel.add(enter);
-
-		
-		levelLabel = new JLabel("Level: " + cabin.getLevel());
-		mainPanel.add(levelLabel);
-		
-		stateLabel = new JLabel("State: " + cabin.getCabinState());
-		mainPanel.add(stateLabel);
-		
 		cabin.addGUIChangeListener(this); // pak hlavne odregistrovat
 	}
 
@@ -124,105 +186,203 @@ public class Frame extends JFrame implements PropertyChangeListener, WindowListe
 	}
 
 	private class PeopleButtonListener implements ActionListener {
-		int change;
 
-		public PeopleButtonListener(int change) {
-			this.change = change;
+		private JToggleButton button;
+
+		public PeopleButtonListener(JToggleButton button) {
+			this.button = button;
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			if (cabin.getOccupancy() + change < 0
-					|| cabin.getOccupancy() + change >= 6)
-				return;
 
-			if (change == 1) {
+			if (cabin.getDoorState() == DoorState.CLOSE) {
+				button.setSelected(!button.isSelected());
+				return;
+			}
+
+			if (button.isSelected()) {
 				cabin.enter();
+				button.setIcon(personImage);
 			} else {
 				cabin.leave();
+				button.setIcon(noPersonImage);
 			}
-			peopleLabel.setText("People: " + cabin.getOccupancy());
-			// mainPanel.validate(); //asi netreba
-			// mainPanel.repaint();
+
+			doorQueue.add("SENSOR");
 		}
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
-	
+
 		System.out.println("GUI event " + event.getPropertyName());
 
 		switch (event.getPropertyName()) {
 		case ElevatorCabin.LIGHT:
 			if ((boolean) event.getNewValue())
-				lightBulb.setBackground(Color.YELLOW);
+				cabinPanel.setBackground(Color.YELLOW);
 			else
-				lightBulb.setBackground(Color.BLACK);
+				cabinPanel.setBackground(Color.BLACK);
 			break;
-		case ElevatorCabin.DOOR: // /start separate Thread for opening/closing -
-									// REDO
+		case ElevatorCabin.DOOR: 
 			if ((DoorState) event.getNewValue() == DoorState.OPENING) {
-				cabin.setDoorState(DoorState.OPEN);
-				doorLabel.setText("DOOR: OPENED");
+				doorQueue.add("OPENING");
 			} else if ((DoorState) event.getNewValue() == DoorState.CLOSING) {
-				cabin.setDoorState(DoorState.CLOSE);
-				doorLabel.setText("DOOR: CLOSED");
+				doorQueue.add("CLOSING");
 			}
 			break;
 		case ElevatorCabin.BUTTON:
 			int index = ((IndexedPropertyChangeEvent) event).getIndex();
 			if ((LightState) event.getNewValue() == LightState.SHINE) {
-				lvlButtons[index].setBackground(Color.YELLOW);
-			} else if ((LightState) event.getNewValue() == LightState.FLASH) {
-				lvlButtons[index].setBackground(Color.ORANGE);
-			} else {
-				lvlButtons[index].setBackground(null);
+				lvlButtons[index].setIcon(bleepImage);
+			} else if ((LightState) event.getNewValue() == LightState.DARK) {
+				lvlButtons[index].setIcon(idleImage);
 			}
-
 			break;
 		case ElevatorCabin.LEVEL:
-			levelLabel.setText("Level: " + cabin.getLevel());
+			levelLabel.setText("" + cabin.getLevel());
 			break;
 		case ElevatorCabin.STATE:
-			stateLabel.setText("State: " + cabin.getCabinState());
+			if (cabin.getCabinState() == CabinState.MOVE_UP) {
+				stateLabel.setIcon(upImage);
+			} else if (cabin.getCabinState() == CabinState.MOVE_DOWN) {
+				stateLabel.setIcon(downImage);
+			} else if (cabin.getCabinState() == CabinState.OVERLOAD) {
+				stateLabel.setIcon(overloadImage);
+			} else {
+				stateLabel.setIcon(cleanImage);
+			}
 			break;
 		}
 	}
-	
-	///Follows WindowListener methods
+
+	private class GUIMovingThread implements Runnable {
+
+		private int counter;
+		private int progress;
+		private boolean lightUp;
+		private boolean opening;
+		private boolean closing;
+		private boolean doorMoved;
+		private final int maxProgress = 185;
+
+		public GUIMovingThread() {
+			lightUp = false;
+			opening = false;
+			closing = false;
+			doorMoved = false;
+		}
+
+		@Override
+		public void run() {
+
+			while (true) {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// well...
+				}
+
+				if (counter == 5) {
+					for (int i = 0; i < cabin.getLevelCount(); i++) {
+						if (cabin.getLightState(i) == LightState.FLASH) {
+							counter = 0;
+							if (lightUp) {
+								lvlButtons[i].setIcon(idleImage);
+							} else {
+								lvlButtons[i].setIcon(bleepImage);
+							}
+						}
+					}
+					counter = 0;
+					lightUp = !lightUp;
+				}
+
+				if (!doorQueue.isEmpty()) {
+					String command = doorQueue.poll();
+					if (command.equals("OPENING")
+							&& cabin.getDoorState() != DoorState.OPEN) {
+						closing = false;
+						opening = true;
+					}
+					if (command.equals("CLOSING")
+							&& cabin.getDoorState() != DoorState.CLOSE) {
+						opening = false;
+						closing = true;
+					}
+					if (command.equals("SENSOR") && closing) {
+						closing = false;
+						opening = true;
+					}
+				}
+				if (opening) {
+					progress += 5;
+					doorMoved = true;
+					if (progress >= 185) {
+						opening = false;
+						cabin.setDoorState(DoorState.OPEN);
+					}
+				}
+				if (closing) {
+					progress -= 5;
+					doorMoved = true;
+					if (progress <= 0) {
+						closing = false;
+						cabin.setDoorState(DoorState.CLOSE);
+					}
+				}
+
+				if (doorMoved) {
+					doorPosts.removeAll();
+					doorPosts.add(doorPanel, "width " + progress + "::"
+							+ progress
+							+ ", height 285::285, wrap, alignx center,push");
+					doorPosts.validate();
+					System.out.println("HU?");
+				}
+
+				doorMoved = false;
+				counter++;
+			}
+		}
+
+	}
+
+	// /Follows WindowListener methods
 	@Override
 	public void windowClosing(WindowEvent arg0) {
-		//client.stop();
-		System.exit(0); //no need to call stop, thread ends anyway
+		// client.stop();
+		System.exit(0); // no need to call stop, thread ends anyway
 	}
-	
+
 	@Override
 	public void windowClosed(WindowEvent arg0) {
-		// nada	
+		// nada
 	}
 
 	@Override
 	public void windowActivated(WindowEvent arg0) {
-		// nada		
+		// nada
 	}
 
 	@Override
 	public void windowDeactivated(WindowEvent arg0) {
-		// nada		
+		// nada
 	}
 
 	@Override
 	public void windowDeiconified(WindowEvent arg0) {
-		// nada		
+		// nada
 	}
 
 	@Override
 	public void windowIconified(WindowEvent arg0) {
-		// nada		
+		// nada
 	}
 
 	@Override
 	public void windowOpened(WindowEvent arg0) {
-		// nada		
+		// nada
 	}
 
 }
