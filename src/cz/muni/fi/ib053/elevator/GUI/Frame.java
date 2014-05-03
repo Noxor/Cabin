@@ -33,14 +33,13 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 public class Frame extends JFrame implements PropertyChangeListener,
 		WindowListener {
 	private ElevatorCabin cabin;
-	private CabinClient client;
+	private CabinClient client; //asi zrusit422551
 	private JPanel mainPanel;
 	private JPanel IOPanel;
 	private JPanel cabinPanel;
 	private JButton[] lvlButtons;
 	private JToggleButton[] people;
 	private JButton doorClose, doorOpen;
-	private JLabel lightBulb; // temporal from now on down
 	private JLabel levelLabel;
 	private JLabel stateLabel;
 	private ImageIcon closeImg;
@@ -151,6 +150,7 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		}
 
 		cabin.addGUIChangeListener(this); // pak hlavne odregistrovat
+		this.client.initialize();
 	}
 
 	private class LevelButtonListener implements ActionListener {
@@ -227,6 +227,7 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		case ElevatorCabin.DOOR: 
 			if ((DoorState) event.getNewValue() == DoorState.OPENING) {
 				doorQueue.add("OPENING");
+				System.out.println("HU!!!!!!!!!!!!");
 			} else if ((DoorState) event.getNewValue() == DoorState.CLOSING) {
 				doorQueue.add("CLOSING");
 			}
@@ -316,20 +317,22 @@ public class Frame extends JFrame implements PropertyChangeListener,
 					}
 				}
 				if (opening) {
-					progress += 5;
-					doorMoved = true;
 					if (progress >= 185) {
 						opening = false;
 						cabin.setDoorState(DoorState.OPEN);
+						continue;
 					}
+					progress += 5;
+					doorMoved = true;
 				}
 				if (closing) {
-					progress -= 5;
-					doorMoved = true;
 					if (progress <= 0) {
 						closing = false;
 						cabin.setDoorState(DoorState.CLOSE);
+						continue;
 					}
+					progress -= 5;
+					doorMoved = true;					
 				}
 
 				if (doorMoved) {
@@ -340,7 +343,8 @@ public class Frame extends JFrame implements PropertyChangeListener,
 					doorPosts.validate();
 					System.out.println("HU?");
 				}
-
+				
+				System.out.println("HU!");
 				doorMoved = false;
 				counter++;
 			}

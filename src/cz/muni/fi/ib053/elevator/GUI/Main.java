@@ -27,7 +27,7 @@ public class Main {
 
 		// /asi presunout initialiyaci spojeni
 		client = new CabinClient(server, port, cabin);
-		client.initialize();
+		
 
 		Frame jms = new Frame(cabin, client);
 		jms.setSize(new Dimension(500, 500));
