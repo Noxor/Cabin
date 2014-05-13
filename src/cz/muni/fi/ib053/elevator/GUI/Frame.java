@@ -30,7 +30,8 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin.CabinState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 
-public class Frame extends JFrame implements PropertyChangeListener {
+public class Frame extends JFrame implements PropertyChangeListener,
+		WindowListener {
 	private ElevatorCabin cabin;
 	private CabinClient client;
 	private JPanel mainPanel;
@@ -56,6 +57,8 @@ public class Frame extends JFrame implements PropertyChangeListener {
 	private ConcurrentLinkedQueue<String> doorQueue;
 
 	public Frame(ElevatorCabin cabin, CabinClient client) {
+		addWindowListener(this);
+
 		this.cabin = cabin;
 		this.client = client;
 		this.doorQueue = new ConcurrentLinkedQueue<String>();
@@ -72,7 +75,6 @@ public class Frame extends JFrame implements PropertyChangeListener {
 		cabinPanel.setBorder(BorderFactory
 				.createLineBorder(Color.GRAY, 1, true));
 		IOPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
-
 
 		closeImg = new ImageIcon("res/BUTTON_CLOSE.png");
 		openImg = new ImageIcon("res/BUTTON_OPEN.png");
@@ -193,12 +195,12 @@ public class Frame extends JFrame implements PropertyChangeListener {
 		public void actionPerformed(ActionEvent e) {
 
 			if (button.isSelected()) {
-				if(cabin.enter())
+				if (cabin.enter())
 					button.setIcon(personImage);
 				else
 					button.setSelected(!button.isSelected());
 			} else {
-				if(cabin.leave())
+				if (cabin.leave())
 					button.setIcon(noPersonImage);
 				else
 					button.setSelected(!button.isSelected());
@@ -220,7 +222,7 @@ public class Frame extends JFrame implements PropertyChangeListener {
 			else
 				cabinPanel.setBackground(Color.BLACK);
 			break;
-		case ElevatorCabin.DOOR: 
+		case ElevatorCabin.DOOR:
 			if ((DoorState) event.getNewValue() == DoorState.OPENING) {
 				doorQueue.add("OPENING");
 			} else if ((DoorState) event.getNewValue() == DoorState.CLOSING) {
@@ -327,7 +329,7 @@ public class Frame extends JFrame implements PropertyChangeListener {
 						continue;
 					}
 					progress -= 5;
-					doorMoved = true;					
+					doorMoved = true;
 				}
 
 				if (doorMoved) {
@@ -337,11 +339,48 @@ public class Frame extends JFrame implements PropertyChangeListener {
 							+ ", height 285::285, wrap, alignx center,push");
 					doorPosts.validate();
 				}
-				
+
 				doorMoved = false;
 				counter++;
 			}
 		}
 
+	}
+
+	// /Follows WindowListener methods
+	@Override
+	public void windowClosing(WindowEvent arg0) {
+		client.quit();
+		System.exit(0); // for command line mode
+	}
+
+	@Override
+	public void windowClosed(WindowEvent arg0) {
+		// nada
+	}
+
+	@Override
+	public void windowActivated(WindowEvent arg0) {
+		// nada
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent arg0) {
+		// nada
+	}
+
+	@Override
+	public void windowDeiconified(WindowEvent arg0) {
+		// nada
+	}
+
+	@Override
+	public void windowIconified(WindowEvent arg0) {
+		// nada
+	}
+
+	@Override
+	public void windowOpened(WindowEvent arg0) {
+		// nada
 	}
 }

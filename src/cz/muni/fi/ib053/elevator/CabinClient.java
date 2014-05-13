@@ -108,6 +108,21 @@ public class CabinClient implements PropertyChangeListener {
 	public void stop(){
 		listening = false;
 	}
+	
+	public void quit(){
+		stop();
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// well...
+		}
+		try {
+			connection.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
