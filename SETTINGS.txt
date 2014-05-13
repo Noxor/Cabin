@@ -1,0 +1,5 @@
+localhost;8080;5;2;4
+-2;-1;0;1 NP;2 NP
+
+//serverUrl;port;pocetPater;prizemi;kapacitaKabiny
+//jmena pater od spodu nahoru oddelene ;

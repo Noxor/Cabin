@@ -29,8 +29,7 @@ public class ElevatorCabin {
 			OPEN_BUTTON = "OPEN_BUTTON", CLOSE_BUTTON = "CLOSE_BUTTON",
 			STATE = "STATE";
 
-	public ElevatorCabin(String[] labels, int capacity, int groundLevel,
-			String server, int port) {
+	public ElevatorCabin(String[] labels, int capacity, int groundLevel) {
 		if (labels.length == 0)
 			throw new IllegalArgumentException(
 					"Constructor of elevator cabin requires array of minimal length 1");
@@ -71,7 +70,7 @@ public class ElevatorCabin {
 
 	public void setLevel(int level) {
 		if(level < 0 || level >= levelCount)
-			return;//log
+			return;
 		int old = this.level;
 		this.level = level;
 		eventsForGUI.firePropertyChange(LEVEL, old, level);		

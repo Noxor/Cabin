@@ -32,7 +32,6 @@ public class CabinClient implements PropertyChangeListener {
 		}
 
 		cabin.addConnectionChangeListener(this); // pak odregistrovat
-		//cabin.addGUIChangeListener(this);
 	}
 
 	private void send(String message) {
