@@ -30,10 +30,9 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin.CabinState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 
-public class Frame extends JFrame implements PropertyChangeListener,
-		WindowListener {
+public class Frame extends JFrame implements PropertyChangeListener {
 	private ElevatorCabin cabin;
-	private CabinClient client; //asi zrusit422551
+	private CabinClient client;
 	private JPanel mainPanel;
 	private JPanel IOPanel;
 	private JPanel cabinPanel;
@@ -74,7 +73,6 @@ public class Frame extends JFrame implements PropertyChangeListener,
 				.createLineBorder(Color.GRAY, 1, true));
 		IOPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
 
-		addWindowListener(this);
 
 		closeImg = new ImageIcon("res/BUTTON_CLOSE.png");
 		openImg = new ImageIcon("res/BUTTON_OPEN.png");
@@ -90,8 +88,7 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		stateLabel = new JLabel(cleanImage);
 		IOPanel.add(stateLabel);
 
-		levelLabel = new JLabel(cabin.getLevel() + ""); // toString does not
-														// work on int
+		levelLabel = new JLabel(cabin.getLevelLabel(cabin.getLevel()));
 		IOPanel.add(levelLabel, "alignx center, wrap");
 		levelLabel.setForeground(Color.BLUE);
 
@@ -195,17 +192,16 @@ public class Frame extends JFrame implements PropertyChangeListener,
 
 		public void actionPerformed(ActionEvent e) {
 
-			if (cabin.getDoorState() == DoorState.CLOSE) {
-				button.setSelected(!button.isSelected());
-				return;
-			}
-
 			if (button.isSelected()) {
-				cabin.enter();
-				button.setIcon(personImage);
+				if(cabin.enter())
+					button.setIcon(personImage);
+				else
+					button.setSelected(!button.isSelected());
 			} else {
-				cabin.leave();
-				button.setIcon(noPersonImage);
+				if(cabin.leave())
+					button.setIcon(noPersonImage);
+				else
+					button.setSelected(!button.isSelected());
 			}
 
 			doorQueue.add("SENSOR");
@@ -227,7 +223,6 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		case ElevatorCabin.DOOR: 
 			if ((DoorState) event.getNewValue() == DoorState.OPENING) {
 				doorQueue.add("OPENING");
-				System.out.println("HU!!!!!!!!!!!!");
 			} else if ((DoorState) event.getNewValue() == DoorState.CLOSING) {
 				doorQueue.add("CLOSING");
 			}
@@ -241,7 +236,7 @@ public class Frame extends JFrame implements PropertyChangeListener,
 			}
 			break;
 		case ElevatorCabin.LEVEL:
-			levelLabel.setText("" + cabin.getLevel());
+			levelLabel.setText(cabin.getLevelLabel(cabin.getLevel()));
 			break;
 		case ElevatorCabin.STATE:
 			if (cabin.getCabinState() == CabinState.MOVE_UP) {
@@ -341,52 +336,12 @@ public class Frame extends JFrame implements PropertyChangeListener,
 							+ progress
 							+ ", height 285::285, wrap, alignx center,push");
 					doorPosts.validate();
-					System.out.println("HU?");
 				}
 				
-				System.out.println("HU!");
 				doorMoved = false;
 				counter++;
 			}
 		}
 
 	}
-
-	// /Follows WindowListener methods
-	@Override
-	public void windowClosing(WindowEvent arg0) {
-		// client.stop();
-		System.exit(0); // no need to call stop, thread ends anyway
-	}
-
-	@Override
-	public void windowClosed(WindowEvent arg0) {
-		// nada
-	}
-
-	@Override
-	public void windowActivated(WindowEvent arg0) {
-		// nada
-	}
-
-	@Override
-	public void windowDeactivated(WindowEvent arg0) {
-		// nada
-	}
-
-	@Override
-	public void windowDeiconified(WindowEvent arg0) {
-		// nada
-	}
-
-	@Override
-	public void windowIconified(WindowEvent arg0) {
-		// nada
-	}
-
-	@Override
-	public void windowOpened(WindowEvent arg0) {
-		// nada
-	}
-
 }

@@ -15,7 +15,6 @@ public class ElevatorCabin {
 	private PropertyChangeSupport eventsForGUI;
 	private PropertyChangeSupport eventsForConnection;
 	private int levelCount;
-	private int groundLevel;
 	private int level;
 	private String[] levelLabels;
 	private LightState[] buttonLight;
@@ -27,9 +26,9 @@ public class ElevatorCabin {
 	public static final String LEVEL = "LEVEL", DOOR = "DOOR", LIGHT = "LIGHT",
 			BUTTON = "BUTTON", SENSOR = "SENSOR", LOAD = "LOAD",
 			OPEN_BUTTON = "OPEN_BUTTON", CLOSE_BUTTON = "CLOSE_BUTTON",
-			STATE = "STATE";
+			STATE = "STATE",ERROR = "ERROR";
 
-	public ElevatorCabin(String[] labels, int capacity, int groundLevel) {
+	public ElevatorCabin(String[] labels, int capacity) {
 		if (labels.length == 0)
 			throw new IllegalArgumentException(
 					"Constructor of elevator cabin requires array of minimal length 1");
@@ -47,21 +46,14 @@ public class ElevatorCabin {
 		this.capacity = capacity;
 		occupancy = 0;
 
-		level = -1; // Error state, should be rewritten by first message from
-					// controller
+		level = 0; // some number in range; should be changes immediately by controller
 
 		doorState = DoorState.CLOSE;
 		cabinState = CabinState.STAND_EMPTY;
-
-		this.groundLevel = groundLevel;
 	}
 
 	public int getLevelCount() {
 		return levelCount;
-	}
-
-	public int getGroundLevel() {
-		return groundLevel;
 	}
 
 	public int getLevel() {
@@ -96,7 +88,12 @@ public class ElevatorCabin {
 
 	// only method called from different Threads
 	synchronized public void setDoorState(DoorState state) {
-		System.out.println("in set door state method " + state);
+		
+		if(state == DoorState.OPENING && (cabinState == CabinState.MOVE_UP || cabinState == CabinState.MOVE_DOWN))
+		{
+			eventsForConnection.firePropertyChange(ERROR, -1, 0);
+		}
+		
 		DoorState old = doorState;
 		this.doorState = state;
 		
@@ -135,15 +132,19 @@ public class ElevatorCabin {
 
 	// mozna predelat, pamatovat occupancy LoadState v kabine, nebo metoda,so ho
 	// vraci
-	public void enter() {
+	public boolean enter() {
+		if(doorState == DoorState.CLOSE)
+			return false;
 		sensorEvent(1);
+		return true;
 	}
 
-	public void leave() {
-		if (occupancy <= 0)
-			return;
+	public boolean leave() {
+		if (occupancy <= 0 || doorState == DoorState.CLOSE)
+			return false;
 
 		sensorEvent(-1);
+		return true;
 	}
 
 	private void sensorEvent(int change) {

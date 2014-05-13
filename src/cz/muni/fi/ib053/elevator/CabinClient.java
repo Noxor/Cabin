@@ -59,6 +59,10 @@ public class CabinClient implements PropertyChangeListener {
 	public void sensorAction() {
 		send("PRUCHOD\n");
 	}
+	
+	public void errorState() {
+		send("CHYBOVY_STAV;D\n");
+	}
 
 	public void occupancyChanged(LoadState occupancy) {
 		switch (occupancy) {
@@ -128,7 +132,10 @@ public class CabinClient implements PropertyChangeListener {
 			break;
 		case ElevatorCabin.CLOSE_BUTTON:
 			closeBtnPressed();
-			break;		
+			break;
+		case ElevatorCabin.ERROR:
+			errorState();
+			break;
 		}
 
 	}

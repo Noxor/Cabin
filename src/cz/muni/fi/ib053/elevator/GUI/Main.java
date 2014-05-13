@@ -15,15 +15,13 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin;
 
 public class Main {
 	public static void main(String[] args) {
-		// TODO: propper initialization
-		ElevatorCabin cabin = null;
-		CabinClient client = null;
+		
 		Object[] cabinAndClient = executeSettingFile("SETTINGS.txt");
 		if(cabinAndClient == null || cabinAndClient.length <2)
 			return;
 		
-		cabin = (ElevatorCabin)cabinAndClient[0];
-		client = (CabinClient)cabinAndClient[1];
+		ElevatorCabin cabin = (ElevatorCabin)cabinAndClient[0];
+		CabinClient client = (CabinClient)cabinAndClient[1];
 
 		Frame jms = new Frame(cabin, client);
 		jms.setSize(new Dimension(500, 500));
@@ -36,7 +34,6 @@ public class Main {
 		int port = 0;
 		int levels;
 		String[] btnLabels;
-		int groundLevel;
 		int capacity;
 
 		try {
@@ -46,8 +43,7 @@ public class Main {
 			server = variables[0];
 			port = Integer.parseInt(variables[1]);
 			levels = Integer.parseInt(variables[2]);
-			groundLevel = Integer.parseInt(variables[3]);
-			capacity = Integer.parseInt(variables[4]);
+			capacity = Integer.parseInt(variables[3]);
 			btnLabels = lines.get(1).split(";");
 
 			if (btnLabels.length != levels) {
@@ -67,7 +63,7 @@ public class Main {
 
 			return null;
 		}
-		ElevatorCabin cabin = new ElevatorCabin(btnLabels, capacity, groundLevel);
+		ElevatorCabin cabin = new ElevatorCabin(btnLabels, capacity);
 		CabinClient client = new CabinClient(server, port, cabin);
 		
 		Object[] out = new Object[] {cabin,client};
