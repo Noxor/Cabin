@@ -7,6 +7,7 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+//ponechano v puvodnim stavu, protoze se zda, ze to funguje
 public class TCPConnection {
 
 	private Socket socket;

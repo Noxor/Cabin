@@ -11,6 +11,7 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin.LoadState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 
+//komunikace kabiny s TCPConnection, obsahuje vlakno ktere posloucha prichozi zpravy
 public class CabinClient implements PropertyChangeListener {
 
 	private TCPConnection connection;
@@ -31,7 +32,7 @@ public class CabinClient implements PropertyChangeListener {
 			e.printStackTrace();
 		}
 
-		cabin.addConnectionChangeListener(this); // pak odregistrovat
+		cabin.addConnectionChangeListener(this);
 	}
 
 	private void send(String message) {
@@ -90,7 +91,7 @@ public class CabinClient implements PropertyChangeListener {
 			send("DVERE;O\n");
 			break;
 		default:
-			; // nothing is send for opening & closing
+			; // pro opening a closing se nic neodesila
 		}
 	}
 
@@ -98,6 +99,8 @@ public class CabinClient implements PropertyChangeListener {
 		send("INICIALIZACE;" + cabin.getLevelCount() + "\n");
 	}
 	
+	
+	//asi zbytecne metody pro obsluhu poslouchajicihi vlakna
 	public void start(){
 		if(listening)
 			return;
@@ -124,6 +127,7 @@ public class CabinClient implements PropertyChangeListener {
 		}
 	}
 
+	//udalosti od kabiny
 	@Override
 	public void propertyChange(PropertyChangeEvent event) {
 
@@ -155,6 +159,7 @@ public class CabinClient implements PropertyChangeListener {
 
 	}
 
+	//poslouchaci vlakno
 	private class TcpListeningThread implements Runnable {
 
 		public TcpListeningThread() {
@@ -204,7 +209,7 @@ public class CabinClient implements PropertyChangeListener {
 				break;
 			case "PANEL":
 				if (tokens.length != 3)
-					return; // maybe throw or log
+					return;
 				
 				try {
 					level = Integer.parseInt(tokens[2]);
@@ -213,7 +218,6 @@ public class CabinClient implements PropertyChangeListener {
 					// e.printStackTrace();
 					return;
 				}
-				cabin.setLevel(level);
 				switch (tokens[1]) {
 				case "N":
 					cabin.setCabinState(CabinState.MOVE_UP);
@@ -231,12 +235,13 @@ public class CabinClient implements PropertyChangeListener {
 					cabin.setCabinState(CabinState.OVERLOAD);
 					break;
 				default:
-					return; // +log something
+					return;
 				}
+				cabin.setLevel(level);
 				break;
 			case "INDIKACE":
 				if (tokens.length != 3)
-					return; // maybe throw or log
+					return;
 				
 				try {
 					level = Integer.parseInt(tokens[1]);
@@ -256,10 +261,10 @@ public class CabinClient implements PropertyChangeListener {
 					cabin.changeBtnLight(level, LightState.FLASH);
 					break;
 				default:
-					return; // +log something
+					return;
 				}
 				break;
-			default: // log something
+			default:
 			}
 		}
 	}

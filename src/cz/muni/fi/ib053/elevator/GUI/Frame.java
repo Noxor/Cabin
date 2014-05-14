@@ -21,6 +21,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 
 import net.miginfocom.swing.MigLayout;
@@ -30,12 +31,14 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin.CabinState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.DoorState;
 import cz.muni.fi.ib053.elevator.ElevatorCabin.LightState;
 
+
+//trida obsluhuje GUI a specialni vlakno, ktere hybe dvermi a blika svetly 
 public class Frame extends JFrame implements PropertyChangeListener,
 		WindowListener {
 	private ElevatorCabin cabin;
 	private CabinClient client;
 	private JPanel mainPanel;
-	private JPanel IOPanel;
+	private JPanel iOPanel;
 	private JPanel cabinPanel;
 	private JButton[] lvlButtons;
 	private JToggleButton[] people;
@@ -66,15 +69,18 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new MigLayout("", "", ""));
 		this.add(mainPanel);
-		IOPanel = new JPanel();
-		IOPanel.setLayout(new MigLayout("", "", ""));
-		mainPanel.add(IOPanel, "width 100::100");
+		
+		//panel s tlacitky
+		iOPanel = new JPanel();
+		iOPanel.setLayout(new MigLayout("", "", ""));		
+		JScrollPane scrollPanel = new JScrollPane(iOPanel);		
+		mainPanel.add(scrollPanel, "width 130::130");		
+		
+		//panel s kabinou a lidmi
 		cabinPanel = new JPanel();
 		cabinPanel.setLayout(new MigLayout("", "", ""));
 		mainPanel.add(cabinPanel, "width 130::");
-		cabinPanel.setBorder(BorderFactory
-				.createLineBorder(Color.GRAY, 1, true));
-		IOPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+		
 
 		closeImg = new ImageIcon("res/BUTTON_CLOSE.png");
 		openImg = new ImageIcon("res/BUTTON_OPEN.png");
@@ -87,13 +93,15 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		personImage = new ImageIcon("res/PERSON_YES.png");
 		noPersonImage = new ImageIcon("res/PERSON_NO.png");
 
+		//pokud kabina zacina prazdna a nehybe se, jednodussi nez dlouhy switch
 		stateLabel = new JLabel(cleanImage);
-		IOPanel.add(stateLabel);
+		iOPanel.add(stateLabel);
 
 		levelLabel = new JLabel(cabin.getLevelLabel(cabin.getLevel()));
-		IOPanel.add(levelLabel, "alignx center, wrap");
+		iOPanel.add(levelLabel, "alignx center, wrap");
 		levelLabel.setForeground(Color.BLUE);
 
+		//tlacitka pro patra
 		lvlButtons = new JButton[cabin.getLevelCount()];
 		for (int i = cabin.getLevelCount() - 1; i >= 0; i--) {
 			lvlButtons[i] = new JButton(idleImage);
@@ -101,25 +109,26 @@ public class Frame extends JFrame implements PropertyChangeListener,
 
 			lvlButtons[i].addActionListener(new LevelButtonListener(i));
 
-			IOPanel.add(new JLabel(cabin.getLevelLabel(i)), "alignx center");
-			IOPanel.add(lvlButtons[i], "wrap");
+			iOPanel.add(new JLabel(cabin.getLevelLabel(i)), "alignx center");
+			iOPanel.add(lvlButtons[i], "wrap");
 		}
 
+		//tlacitka pro ovladani dveri
 		doorOpen = new JButton(openImg);
 		doorOpen.setBorder(BorderFactory.createEmptyBorder());
+		doorOpen.addActionListener(new OpenButtonListener());
+		iOPanel.add(doorOpen);
 
 		doorClose = new JButton(closeImg);
 		doorClose.setBorder(BorderFactory.createEmptyBorder());
-
 		doorClose.addActionListener(new CloseButtonListener());
-		doorOpen.addActionListener(new OpenButtonListener());
+		iOPanel.add(doorClose);
+		
 
-		IOPanel.add(doorClose);
-		IOPanel.add(doorOpen);
-
-		// TODO re-do bellow completely
+		//pokud je na zacatku zhasnuto
 		cabinPanel.setBackground(Color.BLACK);
 
+		//dvere
 		doorPosts = new JPanel();
 		doorPosts.setLayout(new MigLayout("", "", ""));
 		doorPosts
@@ -133,11 +142,13 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		doorPosts.add(doorPanel,
 				"width 0::0, height 285::285, wrap, alignx center,push");
 
+		
+		//lidi
 		JPanel peoplePanel = new JPanel();
 		peoplePanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1,
 				true));
 		cabinPanel.add(peoplePanel, "alignx center");
-		// ////////////////
+		
 		people = new JToggleButton[5];
 		for (int i = 0; i < people.length; i++) {
 			people[i] = new JToggleButton(noPersonImage);
@@ -148,10 +159,14 @@ public class Frame extends JFrame implements PropertyChangeListener,
 			peoplePanel.add(people[i]);
 		}
 
-		cabin.addGUIChangeListener(this); // pak hlavne odregistrovat
+		cabin.addGUIChangeListener(this);
+		
+		//nechat nakonci jinak prichazi zpravy nehotovemu GUI
 		this.client.initialize();
 	}
 
+	
+	//LISTENERY
 	private class LevelButtonListener implements ActionListener {
 		private int level;
 
@@ -254,6 +269,7 @@ public class Frame extends JFrame implements PropertyChangeListener,
 		}
 	}
 
+	//vlakno obsluhujici dvere a svetla
 	private class GUIMovingThread implements Runnable {
 
 		private int counter;
@@ -347,11 +363,11 @@ public class Frame extends JFrame implements PropertyChangeListener,
 
 	}
 
-	// /Follows WindowListener methods
+	// musi byt vsechny, aby bylo implementovano rozhrani
 	@Override
 	public void windowClosing(WindowEvent arg0) {
 		client.quit();
-		System.exit(0); // for command line mode
+		System.exit(0); // jinak neskonci
 	}
 
 	@Override

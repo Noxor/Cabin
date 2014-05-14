@@ -15,13 +15,22 @@ import cz.muni.fi.ib053.elevator.ElevatorCabin;
 
 public class Main {
 	public static void main(String[] args) {
-		
+
+		// neni nejhezci, ale jinak nejde jednou metodou inicializovat oba
+		// obekty
+		// asi lepsi nez dvakat otevirat soubor
 		Object[] cabinAndClient = executeSettingFile("SETTINGS.txt");
-		if(cabinAndClient == null || cabinAndClient.length <2)
+		if (cabinAndClient == null || cabinAndClient.length < 2)
 			return;
+
+		ElevatorCabin cabin;
+		try {
+			cabin = (ElevatorCabin) cabinAndClient[0];
+		} catch (IllegalArgumentException e) {
+			return;
+		}
 		
-		ElevatorCabin cabin = (ElevatorCabin)cabinAndClient[0];
-		CabinClient client = (CabinClient)cabinAndClient[1];
+		CabinClient client = (CabinClient) cabinAndClient[1];
 
 		Frame jms = new Frame(cabin, client);
 		jms.setSize(new Dimension(500, 500));
@@ -65,8 +74,8 @@ public class Main {
 		}
 		ElevatorCabin cabin = new ElevatorCabin(btnLabels, capacity);
 		CabinClient client = new CabinClient(server, port, cabin);
-		
-		Object[] out = new Object[] {cabin,client};
+
+		Object[] out = new Object[] { cabin, client };
 		return out;
 	}
 

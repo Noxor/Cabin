@@ -4,12 +4,10 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Arrays;
 
-///Predelat i spojeni s vyuzitim listeneru, jine udalosti aby se posilalo je serveru nebo GUI, dalsi PropertyChangeSupport,
-// nebo obracene?? dum poslouchat udalosti od spojeni? zkusit upne nove udalosti
-// http://castever.wordpress.com/2008/07/31/how-to-create-your-own-events-in-java/
-// http://stackoverflow.com/questions/6270132/create-a-custom-event-in-java
-// http://www.codeproject.com/Articles/677591/Defining-Custom-Source-Event-Listener-in-Java  asi nejlepsi
-// http://www.java2s.com/Code/Java/Event/CreatingaCustomEvent.htm ofiko
+//hlavni trida, simuluje vytahovou kabinu a vysila udalosti GUI a CabinClientovi
+//u udalosti, kde jsou dve zdanlive zbytecna cislo, kdyz nejakou vahu ma jen to druhe,
+//jsou potreba obe. Je to pozadavek pouzite tridy - a nesmeji byt stejna,
+//jinak zadna udalost neodejde.
 public class ElevatorCabin {
 
 	private PropertyChangeSupport eventsForGUI;
@@ -23,11 +21,15 @@ public class ElevatorCabin {
 	private int occupancy;
 	private DoorState doorState;
 	private CabinState cabinState;
+	// Stringy jsou nutne, protoze se pouziva uz hotova trida pro obsluhu
+	// udalosti PropertyChangeSupport
 	public static final String LEVEL = "LEVEL", DOOR = "DOOR", LIGHT = "LIGHT",
 			BUTTON = "BUTTON", SENSOR = "SENSOR", LOAD = "LOAD",
 			OPEN_BUTTON = "OPEN_BUTTON", CLOSE_BUTTON = "CLOSE_BUTTON",
-			STATE = "STATE",ERROR = "ERROR";
+			STATE = "STATE", ERROR = "ERROR";
 
+	// nastavovani promenych, ktere muze menit controller je jen docasne a melo
+	// by jim byt okamzite zmeneno
 	public ElevatorCabin(String[] labels, int capacity) {
 		if (labels.length == 0)
 			throw new IllegalArgumentException(
@@ -46,7 +48,7 @@ public class ElevatorCabin {
 		this.capacity = capacity;
 		occupancy = 0;
 
-		level = 0; // some number in range; should be changes immediately by controller
+		level = 0;
 
 		doorState = DoorState.CLOSE;
 		cabinState = CabinState.STAND_EMPTY;
@@ -61,11 +63,11 @@ public class ElevatorCabin {
 	}
 
 	public void setLevel(int level) {
-		if(level < 0 || level >= levelCount)
+		if (level < 0 || level >= levelCount)
 			return;
 		int old = this.level;
 		this.level = level;
-		eventsForGUI.firePropertyChange(LEVEL, old, level);		
+		eventsForGUI.firePropertyChange(LEVEL, old, level);
 	}
 
 	public CabinState getCabinState() {
@@ -75,7 +77,7 @@ public class ElevatorCabin {
 	public void setCabinState(CabinState state) {
 		CabinState old = cabinState;
 		this.cabinState = state;
-		eventsForGUI.firePropertyChange(STATE, old, cabinState);	
+		eventsForGUI.firePropertyChange(STATE, old, cabinState);
 	}
 
 	public int getCapacity() {
@@ -86,34 +88,35 @@ public class ElevatorCabin {
 		return occupancy;
 	}
 
-	// only method called from different Threads
+	// jedina metoda, ve ktere hrozi stret vice vlaken
 	synchronized public void setDoorState(DoorState state) {
-		
-		if(state == DoorState.OPENING && (cabinState == CabinState.MOVE_UP || cabinState == CabinState.MOVE_DOWN))
-		{
+
+		if (state == DoorState.OPENING
+				&& (cabinState == CabinState.MOVE_UP || cabinState == CabinState.MOVE_DOWN)) {
 			eventsForConnection.firePropertyChange(ERROR, -1, 0);
+			return;
 		}
-		
+
 		DoorState old = doorState;
 		this.doorState = state;
-		
-		switch(doorState)  //potreba alespon dokud se dvere otevrou hned, udalosti jsou pomale a dojde k prepnuti kontextu, server pak pro obe zpravy vidi otevrene dvere a posle to pryc dvakrat
-		{
-			case OPENING:
-			case CLOSING:
-				eventsForGUI.firePropertyChange(DOOR, old, doorState);
-				break;
-			case OPEN:
-			case CLOSE:
-				eventsForConnection.firePropertyChange(DOOR, old, doorState);
-				break;
-		}
-		
 
-		
+		switch (doorState) // potreba alespon dokud se dvere otevrou hned,
+							// udalosti jsou pomale a dojde k prepnuti kontextu,
+							// server pak pro obe zpravy vidi otevrene dvere a
+							// posle to pryc dvakrat
+		{
+		case OPENING:
+		case CLOSING:
+			eventsForGUI.firePropertyChange(DOOR, old, doorState);
+			break;
+		case OPEN:
+		case CLOSE:
+			eventsForConnection.firePropertyChange(DOOR, old, doorState);
+			break;
+		}
+
 	}
 
-	// je potreba?
 	public DoorState getDoorState() {
 		return doorState;
 	}
@@ -130,10 +133,8 @@ public class ElevatorCabin {
 		}
 	}
 
-	// mozna predelat, pamatovat occupancy LoadState v kabine, nebo metoda,so ho
-	// vraci
 	public boolean enter() {
-		if(doorState == DoorState.CLOSE)
+		if (doorState == DoorState.CLOSE)
 			return false;
 		sensorEvent(1);
 		return true;
