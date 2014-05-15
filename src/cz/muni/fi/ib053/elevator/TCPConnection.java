@@ -4,10 +4,11 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-//ponechano v puvodnim stavu, protoze se zda, ze to funguje
+//ponechano temer v puvodnim stavu, protoze se zda, ze to funguje
 public class TCPConnection {
 
 	private Socket socket;
@@ -29,7 +30,13 @@ public class TCPConnection {
 	}
 
 	public TCPConnection(String server, int port) throws UnknownHostException, IOException {
-		socket = new Socket(server, port);
+		try{		
+			socket = new Socket(server, port);
+		}catch(ConnectException e)
+		{
+			//chyti se pozdeji null pointer exception, tuhle vyjimku z nejakeho duvodu nejde chytit
+			//nikde jinde. NullPointerException bude vyhozena nasledujici metodou
+		}
 		createReaderWriter();
 	}
 

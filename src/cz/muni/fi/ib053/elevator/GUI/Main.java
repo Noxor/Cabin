@@ -2,6 +2,7 @@ package cz.muni.fi.ib053.elevator.GUI;
 
 import java.awt.Dimension;
 import java.awt.event.WindowEvent;
+import java.net.ConnectException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -20,8 +21,17 @@ public class Main {
 		// obekty
 		// asi lepsi nez dvakat otevirat soubor
 		Object[] cabinAndClient = executeSettingFile("SETTINGS.txt");
+		
 		if (cabinAndClient == null || cabinAndClient.length < 2)
+		{
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// well...
+			}
+			System.exit(1);
 			return;
+		}
 
 		ElevatorCabin cabin;
 		try {
@@ -62,7 +72,7 @@ public class Main {
 
 			JDialog dialog = new JDialog();
 			JLabel label = new JLabel(
-					"SETTING.txt file is missing or contains wrong data.");
+					"Chybi soubor SETTING.txt nebo neni ve spravnem formatu");
 			dialog.setLocationRelativeTo(null);
 			dialog.setTitle("ERROR");
 			dialog.add(label);
@@ -72,8 +82,26 @@ public class Main {
 
 			return null;
 		}
+		
 		ElevatorCabin cabin = new ElevatorCabin(btnLabels, capacity);
-		CabinClient client = new CabinClient(server, port, cabin);
+		CabinClient client;
+		
+		try{
+			client = new CabinClient(server, port, cabin);
+		} catch (Exception e) {
+
+			JDialog dialog = new JDialog();
+			JLabel label = new JLabel(
+					"Nejdrive je treba spustit server.");
+			dialog.setLocationRelativeTo(null);
+			dialog.setTitle("ERROR");
+			dialog.add(label);
+			dialog.pack();
+
+			dialog.setVisible(true);
+
+			return null;
+		}
 
 		Object[] out = new Object[] { cabin, client };
 		return out;

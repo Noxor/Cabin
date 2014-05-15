@@ -3,6 +3,7 @@ package cz.muni.fi.ib053.elevator;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
@@ -18,12 +19,11 @@ public class CabinClient implements PropertyChangeListener {
 	private ElevatorCabin cabin;
 	private boolean listening;
 
-	public CabinClient(String server, int port, ElevatorCabin cabin) {
+	public CabinClient(String server, int port, ElevatorCabin cabin) throws ConnectException{
 		listening = false;
 		this.cabin = cabin;
 		try {
 			connection = new TCPConnection(server, port);
-			start();
 		} catch (SocketException e) {
 			e.printStackTrace();
 		} catch (UnknownHostException e) {
@@ -31,7 +31,12 @@ public class CabinClient implements PropertyChangeListener {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		//pri nezapnutem serveru
+		catch (NullPointerException e) {
+			throw new ConnectException();
+		}
 
+		start();
 		cabin.addConnectionChangeListener(this);
 	}
 
