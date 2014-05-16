@@ -89,13 +89,7 @@ public class ElevatorCabin {
 	}
 
 	// jedina metoda, ve ktere hrozi stret vice vlaken
-	synchronized public void setDoorState(DoorState state) {
-
-		if (state == DoorState.OPENING
-				&& (cabinState == CabinState.MOVE_UP || cabinState == CabinState.MOVE_DOWN)) {
-			eventsForConnection.firePropertyChange(ERROR, -1, 0);
-			return;
-		}
+	synchronized public void setDoorState(DoorState state) {		
 
 		DoorState old = doorState;
 		this.doorState = state;
